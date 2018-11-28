@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\Request;
+use  App\Article;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,3 +17,16 @@ use Illuminate\Http\Request;
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+
+Route::get('appointments', 'AppointmentsController@index');
+Route::get('appointments/{appointment}', 'AppointmentsController@show');
+Route::post('appointments', 'AppointmentsController@store');
+Route::put('appointments/{appointment}', 'AppointmentsController@update');
+Route::delete('appointments/{appointment}', 'AppointmentsController@delete');
+
+Route::get('appointment-types', 'AppointmentTypesController@index');
+Route::get('appointment-types/{appointmentType}', 'AppointmentTypesController@show');
+Route::post('appointment-types', 'AppointmentTypesController@store');
+Route::put('appointment-types/{appointmentType}', 'AppointmentTypesController@update');
+Route::delete('appointment-types/{appointmentType}', 'AppointmentTypesController@delete');

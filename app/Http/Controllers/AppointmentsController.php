@@ -3,98 +3,73 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Appointments;
 
 class AppointmentsController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function index()
     {
-        $appointments = Appointments::all();
-
-        return view('appointments.index', compact('appointments'));
+        return Appointments::all();
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
+    public function show(Appointments $appointment)
     {
-        return view('appointments.create');
+        return $appointment;
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
-        $request->validate([
-            'was_scheduled'=> 'required|integer',
-            'appointment_types_id' => 'required|integer'
-          ]);
-        $appointment = new Appointments([
-            'identification' => $request->get('identification'),
-            'appointment_serial'=> $request->get('appointment_serial'),
-            'was_scheduled'=> $request->get('was_scheduled'),
-            'appointment_types_id'=> $request->get('appointment_types_id')
-          ]);
-        $appointment->save();
-        return redirect('/appointments')->with('success', 'Turn has been added');
+
+        $requestData = $request->all();
+    
+        if($requestData['appointment_types_id'] == 1){
+            
+            $lastTurnNumberQCL =  Appointments::whereRaw("turn_serial = 'QCL'")->orderBy('id', 'desc')->first();
+
+            //If turn is quicklane we use the serial QCL ollowed by turn number . For turn number we check the last turn added to the database of type QuickLane
+            if($lastTurnNumberQCL){
+                $requestData['turn_number'] = $lastTurnNumberQCL->turn_number + 1;
+                $requestData['turn_serial'] = 'QCL';
+                $requestData['turn'] = 'QCL-' . $requestData['turn_number'];
+            }
+            else{
+                $requestData['turn_number'] = 0;
+                $requestData['turn_serial'] = 'QCL';
+                $requestData['turn'] = 'QCL-' . $requestData['turn_number'];
+            }
+        }else{
+            //If turn is Taller we use the serial TLR followed by turn number. For turn number we check the last turn added to the database of type Taller
+
+            $lastTurnNumberTLR =  Appointments::whereRaw("turn_serial = 'TLR'")->orderBy('id', 'desc')->first();
+            //If turn is quicklane we use the serial QCL ollowed by turn number . For turn number we check the last turn added to the database of type QuickLane
+            if($lastTurnNumberTLR){
+                $requestData['turn_number'] = $lastTurnNumberTLR->turn_number + 1;
+                $requestData['turn_serial'] = 'TLR';
+                $requestData['turn'] = 'TLR-' . $requestData['turn_number'];
+            }
+            else{
+                $requestData['turn_number'] = 0;
+                $requestData['turn_serial'] = 'TLR';
+                $requestData['turn'] = 'TLR-' . $requestData['turn_number'];
+            }
+        }
+
+        $appointment = Appointments::create($requestData);
+
+        return response()->json($appointment, 201);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
+    public function update(Request $request, Appointments $appointment)
     {
-        //
+        $appointment->update($request->all());
+
+        return response()->json($appointment, 200);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
+    public function delete(Appointments $appointment)
     {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        $appointment = Appointments::find($id);
         $appointment->delete();
 
-        return redirect('/appointments')->with('success', 'Appointment has been deleted Successfully');
+        return response()->json(null, 204);
     }
 }
