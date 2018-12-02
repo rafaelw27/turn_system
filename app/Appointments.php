@@ -13,6 +13,7 @@ class Appointments extends Model
         'appointment_types_id',
         'turn_number',
         'turn_serial',
-        'turn'
+        'turn',
+        'service_id'
       ];
 }
